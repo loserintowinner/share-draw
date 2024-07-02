@@ -19,12 +19,7 @@ import java.util.Scanner;
 
 public class Yun139APIServlet extends HttpServlet {
 
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        System.out.println("start server");
-        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-    }
+
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) {

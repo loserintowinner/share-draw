@@ -1287,3 +1287,7 @@ confEvalWarn=Evaluation License - Not for production use
 yun139=移动云盘
 shareGroup=共享群
 installPlugin=安装插件
+owncloud=自有云
+saveItToOwnCloudToShare=您需要将 "{1}" 保存到 OwnCloud，然后才能进行共享。
+saveToOwnCloud=Save to OwnCloud
+newFolder=新建文件夹

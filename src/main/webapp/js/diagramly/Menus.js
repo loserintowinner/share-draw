@@ -3047,6 +3047,16 @@
 				}
 			}
 
+			if (editorUi.isModeReady(App.MODE_OWNCLOUD))
+			{
+				menu.addItem(mxResources.get('owncloud') + '...', null, function()
+				{
+					pickFileFromService(editorUi.owncloud);
+				}, parent);
+			}
+
+			menu.addSeparator(parent);
+
 			if (editorUi.isModeReady(App.MODE_ONEDRIVE))
 			{
 				menu.addItem(mxResources.get('oneDrive') + '...', null, function()

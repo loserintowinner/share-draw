@@ -230,6 +230,11 @@ App.MODE_GITLAB = 'gitlab';
 App.MODE_YUN139 = 'yun139';
 
 /**
+ * OwnCloud mode
+ */
+App.MODE_OWNCLOUD = 'owncloud';
+
+/**
  * Device Mode
  */
 App.MODE_DEVICE = 'device';
@@ -1564,6 +1569,33 @@ App.prototype.init = function()
 		if (window.console != null)
 		{
 			console.log('Yun139Client disabled: ' + e.message);
+		}
+	}
+
+	/**
+	 * Creates owncloud client.
+	 */
+	try
+	{
+		this.owncloud = (!mxClient.IS_IE || document.documentMode == 10 ||
+			mxClient.IS_IE11 || mxClient.IS_EDGE) &&
+		(urlParams['ss'] != '0' && (urlParams['embed'] != '1' ||
+			urlParams['ss'] == '1')) ? new OwnCloudClient(this) : null;
+
+		if (this.owncloud != null)
+		{
+			this.owncloud.addListener('userChanged', mxUtils.bind(this, function()
+			{
+				this.updateUserElement();
+				this.restoreLibraries();
+			}));
+		}
+	}
+	catch (e)
+	{
+		if (window.console != null)
+		{
+			console.log('OwnCloudClient disabled: ' + e.message);
 		}
 	}
 
@@ -4753,7 +4785,7 @@ App.prototype.loadTemplate = function(url, onload, onerror, templateFilename, as
 			'&' + nocache + ((base64) ? '&base64=1' : '');
 	}
 
-	this.editor.loadUrl(realUrl, mxUtils.bind(this, function(responseData)
+	this.editor.loadUrl(realUrl, mxUtils.bind(this, function (responseData, req)
 	{
 		try
 		{
@@ -4777,7 +4809,7 @@ App.prototype.loadTemplate = function(url, onload, onerror, templateFilename, as
 
 				this.importVisio(this.base64ToBlob(responseData.substring(responseData.indexOf(',') + 1)), function(xml)
 				{
-					onload(xml);
+					onload(xml, req);
 				}, onerror, filterFn);
 			}
 			else if (new XMLHttpRequest().upload && this.isRemoteFileFormat(data, filterFn))
@@ -4790,7 +4822,7 @@ App.prototype.loadTemplate = function(url, onload, onerror, templateFilename, as
 						if (xhr.readyState == 4 && xhr.status >= 200 && xhr.status <= 299 &&
 							xhr.responseText.substring(0, 13) == '<mxGraphModel')
 						{
-							onload(xhr.responseText);
+							onload(xhr.responseText, req);
 						}
 					}), url);
 				}
@@ -4803,7 +4835,7 @@ App.prototype.loadTemplate = function(url, onload, onerror, templateFilename, as
 			{
 				this.convertLucidChart(data, mxUtils.bind(this, function(xml)
 				{
-					onload(xml);
+					onload(xml, req);
 				}), mxUtils.bind(this, function(e)
 				{
 					onerror(e);
@@ -4816,7 +4848,7 @@ App.prototype.loadTemplate = function(url, onload, onerror, templateFilename, as
 					data = Editor.extractGraphModelFromPng(responseData);
 				}
 
-				onload(data);
+				onload(data, req);
 			}
 		}
 		catch (e)
@@ -5037,6 +5069,10 @@ App.prototype.createFile = function(title, data, libs, mode, done, replace, fold
 			else if (mode == App.MODE_YUN139 && this.yun139 != null)
 			{
 				this.yun139.insertFile(title, data, fileCreated, error, false, folderId);
+			}
+			else if (mode == App.MODE_OWNCLOUD && this.owncloud != null)
+			{
+				this.owncloud.insertFile(title, data, fileCreated, error, false, folderId);
 			}
 			else if (mode == App.MODE_TRELLO && this.trello != null)
 			{
@@ -5452,7 +5488,7 @@ App.prototype.loadFile = function(id, sameWindow, file, success, force)
 					}
 				});
 
-				this.loadTemplate(url, mxUtils.bind(this, function(text)
+				this.loadTemplate(url, mxUtils.bind(this, function(text, req)
 				{
 					this.spinner.stop();
 
@@ -5483,6 +5519,17 @@ App.prototype.loadFile = function(id, sameWindow, file, success, force)
 								{
 									filename = tmp + ext;
 								}
+							}
+						}
+
+						if (req.request.getResponseHeader('Content-Disposition') != null)
+						{
+							let contentDisposition = req.request.getResponseHeader('Content-Disposition').replace(/\s*/g,"");
+							let filenameRegex = /filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?;?/gi;
+							let match = contentDisposition.matchAll(filenameRegex);
+							match = Array.from(match)
+							if (match != null && match[0].length >= 2) {
+								filename = decodeURIComponent(match[0][1]);
 							}
 						}
 
@@ -6603,6 +6650,10 @@ App.prototype.getServiceForName = function(name)
 	{
 		return this.yun139;
 	}
+	else if (name == App.MODE_OWNCLOUD)
+	{
+		return this.owncloud;
+	}
 	else
 	{
 		return null;
@@ -6691,6 +6742,14 @@ App.prototype.pickFolder = function(mode, fn, enabled, direct, force, returnPick
 	else if (enabled && mode == App.MODE_YUN139 && this.yun139 != null)
 	{
 		this.yun139.pickFolder(mxUtils.bind(this, function(folderPath)
+		{
+			resume();
+			fn(folderPath);
+		}));
+	}
+	else if (enabled && mode == App.MODE_OWNCLOUD && this.owncloud != null)
+	{
+		this.owncloud.pickFolder(mxUtils.bind(this, function(folderPath)
 		{
 			resume();
 			fn(folderPath);
@@ -7558,7 +7617,10 @@ App.prototype.getMainUser = function()
 	{
 		user = this.yun139.getUser();
 	}
-
+	else if (this.owncloud != null && this.owncloud.getUser() != null)
+	{
+		user = this.owncloud.getUser();
+	}
 	return user;
 };
 
@@ -8209,6 +8271,37 @@ App.prototype.toggleUserPanel = function()
 					this.yun139.logout();
 				}
 			}), mxResources.get('yun139'));
+		}
+
+		if (this.owncloud != null)
+		{
+			addUser(this.owncloud.getUser(), this.owncloud.getUser().pictureUrl, mxUtils.bind(this, function()
+			{
+				var file = this.getCurrentFile();
+
+				if (file != null && file.constructor == GitHubFile)
+				{
+					var doLogout = mxUtils.bind(this, function()
+					{
+						this.owncloud.logout();
+						window.location.hash = '';
+					});
+
+					if (!file.isModified())
+					{
+						doLogout();
+					}
+					else
+					{
+						this.confirm(mxResources.get('allChangesLost'), null, doLogout,
+							mxResources.get('cancel'), mxResources.get('discardChanges'));
+					}
+				}
+				else
+				{
+					this.owncloud.logout();
+				}
+			}), mxResources.get('owncloud'));
 		}
 
 		//TODO We have no user info from Trello, how we can create a user?

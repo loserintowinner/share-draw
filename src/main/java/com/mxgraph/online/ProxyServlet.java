@@ -5,6 +5,7 @@
 package com.mxgraph.online;
 
 import com.google.apphosting.api.DeadlineExceededException;
+import com.mxgraph.extend.owncloud.OwnCloudServlet;
 import com.mxgraph.online.Utils.SizeLimitExceededException;
 import com.mxgraph.online.Utils.UnsupportedContentException;
 
@@ -58,7 +59,7 @@ public class ProxyServlet extends HttpServlet
 	{
 		String urlParam = request.getParameter("url");
 
-		if (!"1".equals(System.getenv("ENABLE_DRAWIO_PROXY")))
+		if (!"1".equals(System.getProperty("ENABLE_DRAWIO_PROXY")))
 		{
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		}
@@ -209,10 +210,11 @@ public class ProxyServlet extends HttpServlet
 		}
 		else
 		{
-			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			log.log(Level.SEVERE,
-					"proxy request with invalid URL parameter: url="
-							+ ((urlParam != null) ? urlParam : "[null]"));
+//			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+//			log.log(Level.SEVERE,
+//					"proxy request with invalid URL parameter: url="
+//							+ ((urlParam != null) ? urlParam : "[null]"));
+			OwnCloudServlet.loadFile(request, response);
 		}
 	}
 

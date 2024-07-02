@@ -61,6 +61,7 @@ if (!mxIsElectron)
 			'https://graph.microsoft.com https://my.microsoftpersonalcontent.com https://*.sharepoint.com  https://*.1drv.com https://api.onedrive.com ' +
 			'https://dl.dropboxusercontent.com https://api.openai.com ' +
 			'https://*.139.com ' +
+			'https://*.tianyansystem.com ' +
 			'https://*.google.com https://fonts.gstatic.com https://fonts.googleapis.com; ' +
 			// font-src about: is required for MathJax HTML-CSS output with STIX
 			'img-src * data: blob:; media-src * data:; font-src * data: about:; ' +
@@ -267,6 +268,8 @@ mxscript(drawDevUrl + 'js/diagramly/GitLabClient.js');
 mxscript(drawDevUrl + 'js/diagramly/md5.js');
 mxscript(drawDevUrl + 'js/diagramly/Yun139File.js');
 mxscript(drawDevUrl + 'js/diagramly/Yun139Client.js');
+mxscript(drawDevUrl + 'js/diagramly/OwnCloudFile.js');
+mxscript(drawDevUrl + 'js/diagramly/OwnCloudClient.js');
 
 mxscript(drawDevUrl + 'js/diagramly/App.js');
 mxscript(drawDevUrl + 'js/diagramly/Menus.js');

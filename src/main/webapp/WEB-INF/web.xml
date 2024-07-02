@@ -144,11 +144,20 @@
         <display-name>Yun139APIServlet</display-name>
         <servlet-name>Yun139APIServlet</servlet-name>
         <servlet-class>com.mxgraph.extend.yun139.Yun139APIServlet</servlet-class>
-        <load-on-startup>0</load-on-startup>
     </servlet>
     <servlet-mapping>
         <servlet-name>Yun139APIServlet</servlet-name>
         <url-pattern>/yun139api</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <description/>
+        <display-name>OwnCloudServlet</display-name>
+        <servlet-name>OwnCloudServlet</servlet-name>
+        <servlet-class>com.mxgraph.extend.owncloud.OwnCloudServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>OwnCloudServlet</servlet-name>
+        <url-pattern>/owncloud/*</url-pattern>
     </servlet-mapping>
     <mime-mapping>
         <extension>css</extension>
@@ -178,4 +187,8 @@
         <filter-name>LoggingFilter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
+    <!-- 定义监听器来设置环境变量 -->
+    <listener>
+        <listener-class>com.mxgraph.extend.EnvironmentVariableListener</listener-class>
+    </listener>
 </web-app>

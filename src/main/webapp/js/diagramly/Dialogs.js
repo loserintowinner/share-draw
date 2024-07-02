@@ -4841,7 +4841,7 @@ var SaveDialog = function(editorUi, title, saveFn, disabledModes, data, mimeType
 				entry = {mode: mode, path: result.value[0].name,
 					id: OneDriveFile.prototype.getIdOf(result.value[0])};
 			}
-			else if ((mode == App.MODE_GITHUB || mode == App.MODE_GITLAB || mode == App.MODE_YUN139) &&
+			else if ((mode == App.MODE_GITHUB || mode == App.MODE_GITLAB || mode == App.MODE_YUN139 || mode == App.MODE_OWNCLOUD) &&
 				result != null && result.length > 0)
 			{
 				entry = {mode: mode, path: decodeURIComponent(result), id: result};
@@ -4931,6 +4931,7 @@ var SaveDialog = function(editorUi, title, saveFn, disabledModes, data, mimeType
 		addStorageEntry(App.MODE_GITHUB, null, null, null, null, 'pick');
 		addStorageEntry(App.MODE_GITLAB, null, null, null, null, 'pick');
 		addStorageEntry(App.MODE_YUN139, null, null, null, null, 'pick');
+		addStorageEntry(App.MODE_OWNCLOUD, null, null, null, null, 'pick');
 		addStorageEntry(App.MODE_TRELLO);
 
 		var allowDevice = !Editor.useLocalStorage || urlParams['storage'] == 'device' ||
@@ -6599,6 +6600,27 @@ var LinkDialog = function(editorUi, initialValue, btnLabel, fn, showPages, showN
 					var path = tokens.slice(3, tokens.length).join('/');
 
 					linkInput.value = DRAWIO_YUN139_URL + '/'+ path;
+					linkInput.focus();
+				}
+			});
+		});
+	}
+
+	if (editorUi.owncloud != null)
+	{
+		addButton('owncloud', function()
+		{
+			editorUi.owncloud.pickFile(function(path)
+			{
+				if (path != null)
+				{
+					var tokens = path.split('/');
+					var org = tokens[0];
+					var repo = tokens[1];
+					var ref = tokens[2];
+					var path = tokens.slice(3, tokens.length).join('/');
+
+					linkInput.value = DRAWIO_OWNCLOUD_URL + '/'+ path;
 					linkInput.focus();
 				}
 			});
@@ -9752,6 +9774,12 @@ var AuthDialog = function(editorUi, peer, showRememberOption, fn)
 		img.src = IMAGE_PATH + '/yun139-logo.svg';
 		img.style.width = '32px';
 	}
+	else if (peer == editorUi.owncloud)
+	{
+		service = mxResources.get('owncloud');
+		img.src = IMAGE_PATH + '/owncloud-logo.svg';
+		img.style.width = '32px';
+	}
 
 	var p = document.createElement('p');
 	mxUtils.write(p, mxResources.get('authorizeThisAppIn', [service]));
@@ -9851,6 +9879,12 @@ var Yun139AuthDialog = function(editorUi, peer, showRememberOption, fn, customBu
 	{
 		service = mxResources.get('yun139');
 		img.src = IMAGE_PATH + '/yun139-logo.svg';
+		img.style.width = '32px';
+	}
+	else if (peer == editorUi.owncloud)
+	{
+		service = mxResources.get('owncloud');
+		img.src = IMAGE_PATH + '/owncloud-logo.svg';
 		img.style.width = '32px';
 	}
 

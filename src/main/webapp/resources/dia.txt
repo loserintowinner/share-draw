@@ -1287,3 +1287,7 @@ confEvalWarn=Evaluation License - Not for production use
 yun139=yun139
 shareGroup=share group
 installPlugin=Installing plugins
+owncloud=OwnCloud
+saveItToOwnCloudToShare=You'll need to save "{1}" to OwnCloud before you can share.
+saveToOwnCloud=Save to OwnCloud
+newFolder=new folder

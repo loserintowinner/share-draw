@@ -44,6 +44,7 @@ window.NOTIFICATIONS_URL = window.NOTIFICATIONS_URL || window.DRAWIO_SERVER_URL 
 window.RT_WEBSOCKET_URL = window.RT_WEBSOCKET_URL || ('wss://' + ((window.location.hostname == 'test.draw.io') ?
 	'app.diagrams.net' : window.location.hostname) + '/rt');
 window.DRAWIO_YUN139_URL = window.DRAWIO_YUN139_URL || 'https://yun.139.com'
+window.DRAWIO_OWNCLOUD_URL = window.DRAWIO_OWNCLOUD_URL || 'https://cloud.tianyansystem.com'
 // Paths and files
 window.SHAPES_PATH = window.SHAPES_PATH || 'shapes';
 // Path for images inside the diagram
