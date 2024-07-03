@@ -5522,7 +5522,7 @@ App.prototype.loadFile = function(id, sameWindow, file, success, force)
 							}
 						}
 
-						if (req.request.getResponseHeader('Content-Disposition') != null)
+						if (urlParams['title'] == null && req.request.getResponseHeader('Content-Disposition') != null)
 						{
 							let contentDisposition = req.request.getResponseHeader('Content-Disposition').replace(/\s*/g,"");
 							let filenameRegex = /filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?;?/gi;

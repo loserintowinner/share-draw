@@ -1291,3 +1291,5 @@ owncloud=自有云
 saveItToOwnCloudToShare=您需要将 "{1}" 保存到 OwnCloud，然后才能进行共享。
 saveToOwnCloud=Save to OwnCloud
 newFolder=新建文件夹
+shareEditLink=共享链接
+embedHtmlLink=嵌入页面

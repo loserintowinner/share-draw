@@ -1108,48 +1108,100 @@
 
     OwnCloudClient.prototype.shareFile = function(file)
     {
+        var token = null;
+        var link = null;
+
         var content = document.createElement('div');
         content.style.whiteSpace = 'nowrap';
         content.style.overflow = 'hidden';
-        content.style.height = '75px';
+        content.style.height = '100px';
+        content.style.display = 'flex';
 
         var dlg = new CustomDialog(this.ui, content);
         dlg.container.removeChild(dlg.okButton.parentNode)
-        this.ui.showDialog(dlg.container, 500, 75, true, true);
+        this.ui.showDialog(dlg.container, 650, 100, true, true);
         this.ui.spinner.spin(content, mxResources.get('loading'));
 
-        var showLink = mxUtils.bind(this,function (link) {
-            var hd = document.createElement('h3');
-            hd.innerText = mxResources.get('shareLink');
-            hd.style.cssText = 'width:100%;text-align:center;margin-top:0px;margin-bottom:12px';
-            content.appendChild(hd);
+        var box = document.createElement('div');
+        box.style.height = '100%';
+        box.style.border = '1px solid lightgray';
+        box.style.boxSizing = 'border-box';
+        box.style.overflow = 'auto';
+        box.style.lineHeight = '1.2em';
 
-            var div = document.createElement('div');
-            div.style.textAlign = 'center';
-            div.style.padding = '10px';
-            content.appendChild(div);
+        var navs = box.cloneNode();
+        navs.style.flex = '2';
+        navs.style.marginRight = '-1px';
+        content.appendChild(navs);
 
-            var span = document.createElement('span');
+        var tabs = document.createElement('div');
+        tabs.style.textAlign = 'center';
+        tabs.style.cursor = 'pointer';
+        tabs.style.padding = '16px';
+
+        var setCss = function (activeTab, inactiveTab)
+        {
+            activeTab.style.borderRight = '3px solid #1E90FF';
+            activeTab.style.color = '#1E90FF';
+
+            if (inactiveTab != null)
+            {
+                inactiveTab.style.borderRight = '3px solid transparent';
+                inactiveTab.style.color = 'black';
+            }
+        }
+
+        var tab1 = tabs.cloneNode();
+        tab1.innerText = mxResources.get('shareEditLink');
+        setCss(tab1);
+        tab1.onclick = function() {
+            setCss(tab1, tab2);
+            link = window.DRAWIO_SERVER_URL + '?title=' + file.meta.name + '#UchartId=' + token;
+            showLink();
+        };
+        var tab2 = tabs.cloneNode();
+        tab2.innerText = mxResources.get('embedHtmlLink');
+        tab2.onclick = function() {
+            setCss(tab2, tab1);
+            link = window.DRAWIO_SERVER_URL + 'embed.html?title=' + file.meta.name + '&chartId=' + token;
+            showLink();
+        };
+        navs.appendChild(tab1);
+        navs.appendChild(tab2);
+
+        var main = box.cloneNode();
+        main.style.flex = '8';
+        content.appendChild(main);
+
+        var div = document.createElement('div');
+        div.style.textAlign = 'center';
+        div.style.margin = '30px 0px';
+        main.appendChild(div);
+
+        var span = document.createElement('span');
+        span.style.fontSize = '15px';
+        span.style.width = '440px';
+        span.style.height = '20px';
+        span.style.whiteSpace = 'nowrap';
+        span.style.overflow = 'hidden';
+        span.style.textOverflow = 'ellipsis';
+        span.style.display = 'inline-block';
+        span.style.verticalAlign = 'middle';
+        div.appendChild(span);
+
+        var button = document.createElement('button');
+        button.innerText = mxResources.get('copy');
+        button.style.marginLeft = '8px';
+        button.style.cursor = 'pointer';
+        button.style.width = '45px';
+        button.style.height = '35px';
+        button.onclick = function() {
+            navigator.clipboard.writeText(link);
+        };
+        div.appendChild(button);
+
+        var showLink = mxUtils.bind(this, function () {
             span.innerText = link;
-            span.style.fontSize = '15px';
-            span.style.width = '400px';
-            span.style.height = '15px';
-            span.style.whiteSpace = 'nowrap';
-            span.style.overflow = 'hidden';
-            span.style.textOverflow = 'ellipsis';
-            span.style.display = 'inline-block';
-            div.appendChild(span);
-
-            var button = document.createElement('button');
-            button.innerText = mxResources.get('copy');
-            button.style.marginLeft = '8px';
-            button.style.cursor = 'pointer';
-            button.style.width = '45px';
-            button.style.height = '35px';
-            button.onclick = function() {
-                navigator.clipboard.writeText(link);
-            };
-            div.appendChild(button);
         });
 
         var error = mxUtils.bind(this, function(err)
@@ -1170,9 +1222,9 @@
             if (res.length > 0)
             {
                 this.ui.spinner.stop();
-                var token = res[0].token;
-                var link = window.DRAWIO_SERVER_URL + '?#UchartId=' + token;
-                showLink(link);
+                token = res[0].token;
+                link = window.DRAWIO_SERVER_URL + '?title=' + file.meta.name + '#UchartId=' + token;
+                showLink();
             }
             else
             {
@@ -1184,9 +1236,9 @@
                 this.executeRequest(createLinkReq, mxUtils.bind(this, function(req)
                 {
                     this.ui.spinner.stop();
-                    var token = JSON.parse(req.getText()).token;
-                    var link = window.DRAWIO_SERVER_URL + '?#UchartId=' + token;
-                    showLink(link);
+                    token = JSON.parse(req.getText()).token;
+                    link = window.DRAWIO_SERVER_URL + '?title=' + file.meta.name + '#UchartId=' + token;
+                    showLink();
                 }), error);
             }
         }), error);

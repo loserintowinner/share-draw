@@ -1291,3 +1291,5 @@ owncloud=OwnCloud
 saveItToOwnCloudToShare=You'll need to save "{1}" to OwnCloud before you can share.
 saveToOwnCloud=Save to OwnCloud
 newFolder=new folder
+shareEditLink=Link for shared editing
+embedHtmlLink=Link for embed html
