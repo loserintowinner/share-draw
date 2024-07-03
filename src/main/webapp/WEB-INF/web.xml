@@ -20,11 +20,11 @@
         <description/>
         <display-name>EmbedServlet</display-name>
         <servlet-name>EmbedServlet</servlet-name>
-        <servlet-class>com.mxgraph.online.EmbedServlet</servlet-class>
+        <servlet-class>com.mxgraph.extend.EmbedServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>EmbedServlet</servlet-name>
-        <url-pattern>/embed.js</url-pattern>
+        <url-pattern>/embed.html</url-pattern>
     </servlet-mapping>
     <servlet>
         <description/>

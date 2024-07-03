@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mxgraph.extend.EnvironmentVariableListener;
 import com.mxgraph.extend.MultiReadHttpServletRequest;
+import com.mxgraph.extend.Utils;
 import com.mxgraph.online.AbsAuth;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -20,28 +22,12 @@ import java.util.*;
 
 public class OwnCloudServlet extends HttpServlet {
 
-    private String CONFIG_PATH = "owncloud.properties";
-
-    public String SERVICE_URL = null;
-
-    public String ADMIN_EMAIL = null;
-
-    public String ADMIN_PASSWORD = null;
-
-    public String TOKEN = null;
+    public static String TOKEN = null;
 
     @Override
     public void init() throws ServletException {
-        try {
-            Properties properties = getProperties(CONFIG_PATH, getServletContext());
-            SERVICE_URL = properties.getProperty("serviceUrl");
-            ADMIN_EMAIL = properties.getProperty("adminEmail");
-            ADMIN_PASSWORD = properties.getProperty("adminPassword");
-            TOKEN = getToken(SERVICE_URL, ADMIN_EMAIL, ADMIN_PASSWORD);
-//            System.out.println("token:" + TOKEN);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        TOKEN = getToken(EnvironmentVariableListener.OWNCLOUD_SERVICE_URL,
+                EnvironmentVariableListener.ADMIN_EMAIL, EnvironmentVariableListener.ADMIN_PASSWORD);
     }
 
     @Override
@@ -64,7 +50,7 @@ public class OwnCloudServlet extends HttpServlet {
             if (!checkUserExist(email)) {
                 addUser(email, password);
             }
-            String token = getToken(SERVICE_URL, email, password);
+            String token = getToken(EnvironmentVariableListener.OWNCLOUD_SERVICE_URL, email, password);
             if (token != null) {
 //                System.out.println(token);
                 response.setStatus(HttpServletResponse.SC_OK);
@@ -91,7 +77,7 @@ public class OwnCloudServlet extends HttpServlet {
     public boolean checkUserExist(String email) {
         HttpURLConnection httpConn = null;
         try {
-            URL url = new URL(SERVICE_URL + "/api/v2.1/admin/users/" + email);
+            URL url = new URL(EnvironmentVariableListener.OWNCLOUD_SERVICE_URL + "/api/v2.1/admin/users/" + email);
             httpConn = (HttpURLConnection) url.openConnection();
             httpConn.setRequestMethod("GET");
             SkipSSLVerification.trustAllHosts((HttpsURLConnection) httpConn);
@@ -116,7 +102,7 @@ public class OwnCloudServlet extends HttpServlet {
     public void addUser(String email, String password) {
         HttpURLConnection httpConn = null;
         try {
-            URL url = new URL(SERVICE_URL + "/api/v2.1/admin/users/");
+            URL url = new URL(EnvironmentVariableListener.OWNCLOUD_SERVICE_URL + "/api/v2.1/admin/users/");
             httpConn = (HttpURLConnection) url.openConnection();
             httpConn.setRequestMethod("POST");
             SkipSSLVerification.trustAllHosts((HttpsURLConnection) httpConn);
@@ -201,10 +187,10 @@ public class OwnCloudServlet extends HttpServlet {
     public static void loadFile(HttpServletRequest request, HttpServletResponse response) {
         HttpURLConnection httpConn = null;
         try {
-            Map<String, String> params = parseQueryString(request.getParameter("url"));
+            Map<String, String> params = Utils.parseQueryString(request.getParameter("url"));
             String chartId = params.get("chartId");
 
-            URL url = new URL("https://cloud.tianyansystem.com/f/" + chartId + "/?dl=1");
+            URL url = new URL(EnvironmentVariableListener.OWNCLOUD_SERVICE_URL + "/f/" + chartId + "/?dl=1");
             httpConn = (HttpURLConnection) url.openConnection();
             httpConn.setRequestMethod("GET");
             httpConn.setRequestProperty("Cookie", request.getHeader("cookie"));
@@ -265,32 +251,4 @@ public class OwnCloudServlet extends HttpServlet {
         // fail
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
-
-    public Properties getProperties(String key, ServletContext servletContext) throws IOException {
-        InputStream inputStream = servletContext.getResourceAsStream("/WEB-INF/" + key);
-
-        Properties props = new Properties();
-        try {
-            props.load(inputStream);
-        } finally {
-            // 关闭输入流
-            inputStream.close();
-        }
-        return props;
-    }
-
-    public static Map<String, String> parseQueryString(String queryString) throws UnsupportedEncodingException {
-        Map<String, String> params = new HashMap<>();
-        String[] pairs = queryString.split("&");
-        for (String pair : pairs) {
-            int idx = pair.indexOf("=");
-            if (idx > 0) {
-                String key = URLDecoder.decode(pair.substring(0, idx), "UTF-8");
-                String value = URLDecoder.decode(pair.substring(idx + 1), "UTF-8");
-                params.put(key, value);
-            }
-        }
-        return params;
-    }
-
 }
