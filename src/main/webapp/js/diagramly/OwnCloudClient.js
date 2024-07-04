@@ -1153,7 +1153,6 @@
 
         var tab1 = tabs.cloneNode();
         tab1.innerText = mxResources.get('shareEditLink');
-        setCss(tab1);
         tab1.onclick = function() {
             setCss(tab1, tab2);
             link = window.DRAWIO_SERVER_URL + '?title=' + file.meta.name + '#UchartId=' + token;
@@ -1166,6 +1165,7 @@
             link = window.DRAWIO_SERVER_URL + 'embed.html?title=' + file.meta.name + '&chartId=' + token;
             showLink();
         };
+        setCss(tab1, tab2);
         navs.appendChild(tab1);
         navs.appendChild(tab2);
 

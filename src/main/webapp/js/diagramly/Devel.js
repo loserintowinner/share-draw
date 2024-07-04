@@ -282,11 +282,11 @@ mxscript(drawDevUrl + 'js/diagramly/mxFreehand.js');
 mxscript(drawDevUrl + 'js/diagramly/P2PCollab.js');
 mxscript(drawDevUrl + 'js/diagramly/DevTools.js');
 
-if (!window.DRAWIO_PUBLIC_BUILD)
-{
+// if (!window.DRAWIO_PUBLIC_BUILD)
+// {
 	mxscript(drawDevUrl + 'js/diagramly/Simple.js');
 	mxscript(drawDevUrl + 'js/mermaid/mermaid2drawio.js');
-}
+// }
 
 // Vsdx/vssx support
 mxscript(drawDevUrl + 'js/diagramly/vsdx/VsdxExport.js');
