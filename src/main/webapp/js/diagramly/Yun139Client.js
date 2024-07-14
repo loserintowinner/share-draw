@@ -119,10 +119,7 @@
                         acceptAuthResponse = false;
                         error({message: mxResources.get('accessDenied'), retry: auth});
                     }
-                }), [[mxResources.get('installPlugin'), mxUtils.bind(this, function()
-                    {
-                        this.ui.openLink('extend/plugins/index.html');
-                    })]]);
+                }));
             });
 
             auth();

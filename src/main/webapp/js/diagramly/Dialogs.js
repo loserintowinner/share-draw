@@ -4911,53 +4911,7 @@ var SaveDialog = function(editorUi, title, saveFn, disabledModes, data, mimeType
 			}
 		}
 
-		addStorageEntry(App.MODE_GOOGLE, mxResources.get('myDrive'),
-			'root', null, null, 'root');
-		addStorageEntry(App.MODE_GOOGLE, null, null, null, null, 'pick');
-
-		if (editorUi.oneDrive != null)
-		{
-			addStorageEntry(App.MODE_ONEDRIVE, mxResources.get('myFiles'),
-				OneDriveFile.prototype.getIdOf(editorUi.oneDrive.rootId),
-				null, null, 'root');
-			addStorageEntry(App.MODE_ONEDRIVE, null, null, null, null, 'pick');
-		}
-
-		if (editorUi.dropbox != null)
-		{
-			addStorageEntry(App.MODE_DROPBOX, 'Apps' + editorUi.dropbox.appPath);
-		}
-
-		addStorageEntry(App.MODE_GITHUB, null, null, null, null, 'pick');
-		addStorageEntry(App.MODE_GITLAB, null, null, null, null, 'pick');
 		addStorageEntry(App.MODE_YUN139, null, null, null, null, 'pick');
-		addStorageEntry(App.MODE_OWNCLOUD, null, null, null, null, 'pick');
-		addStorageEntry(App.MODE_TRELLO);
-
-		var allowDevice = !Editor.useLocalStorage || urlParams['storage'] == 'device' ||
-			(editorUi.getCurrentFile() != null && urlParams['noDevice'] != '1');
-
-		if (EditorUi.nativeFileSupport && allowDevice)
-		{
-			addStorageEntry(App.MODE_DEVICE, null, null, editorUi.mode == App.MODE_DEVICE ||
-				(disabledModes != null && mxUtils.indexOf(disabledModes,
-					App.MODE_BROWSER) >= 0) ? true : null);
-		}
-
-		if (isLocalStorage && urlParams['browser'] != '0')
-		{
-			addStorageEntry(App.MODE_BROWSER);
-		}
-
-		if (allowDevice)
-		{
-			addStorageEntry('download');
-		}
-
-		if (Editor.popupsAllowed)
-		{
-			addStorageEntry('_blank', null, null, null, mxResources.get('openInNewWindow'));
-		}
 
 		if (recentCount > 0)
 		{
@@ -9828,6 +9782,7 @@ var Yun139AuthDialog = function(editorUi, peer, showRememberOption, fn, customBu
 {
 	var div = document.createElement('div');
 	div.style.textAlign = 'center';
+	div.style.padding = '10px';
 
 	var hd = document.createElement('p');
 	hd.style.fontSize = '16pt';

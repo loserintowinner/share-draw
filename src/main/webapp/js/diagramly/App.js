@@ -6336,44 +6336,6 @@ App.prototype.updateButtonContainer = function()
 		{
 			if (file != null)
 			{
-				if (this.shareButton == null && Editor.currentTheme != 'atlas')
-				{
-					this.shareButton = document.createElement('button');
-					this.shareButton.className = 'geBtn geShareBtn';
-					this.shareButton.style.display = 'inline-block';
-					this.shareButton.style.position = 'relative';
-					this.shareButton.style.backgroundImage = 'none';
-					this.shareButton.style.padding = '2px 10px 0 10px';
-					this.shareButton.style.marginTop = '-10px';
-					this.shareButton.style.cursor = 'pointer';
-					this.shareButton.style.height = '32px';
-					this.shareButton.style.minWidth = '0px';
-					this.shareButton.style.top = '-2px';
-					this.shareButton.setAttribute('title', mxResources.get('share'));
-
-					var icon = document.createElement('img');
-					icon.className = 'geInverseAdaptiveAsset';
-					icon.setAttribute('src', this.shareImage);
-					icon.setAttribute('align', 'absmiddle');
-					icon.style.marginRight = '4px';
-					icon.style.marginTop = '-3px';
-					this.shareButton.appendChild(icon);
-
-					if (Editor.currentTheme != 'atlas')
-					{
-						icon.style.filter = 'invert(100%)';
-					}
-
-					mxUtils.write(this.shareButton, mxResources.get('share'));
-
-					mxEvent.addListener(this.shareButton, 'click', mxUtils.bind(this, function()
-					{
-						this.actions.get('share').funct();
-					}));
-
-					this.buttonContainer.appendChild(this.shareButton);
-				}
-
 				if (this.shareButton != null)
 				{
 					this.shareButton.style.display = (Editor.currentTheme == 'simple' ||
@@ -6457,6 +6419,131 @@ App.prototype.updateButtonContainer = function()
 				this.notificationBtn.style.marginRight = '';
 				this.notificationBtn.style.marginTop = '';
 			}
+		}
+
+		// AI drawing
+		if(this.Yun139Button == null)
+		{
+			this.Yun139Button = document.createElement('button');
+			this.Yun139Button.className = 'geBtn geShareBtn';
+			this.Yun139Button.style.display = 'inline-block';
+			this.Yun139Button.style.position = 'relative';
+			this.Yun139Button.style.backgroundImage = 'none';
+			this.Yun139Button.style.padding = '2px 10px 0 10px';
+			this.Yun139Button.style.marginTop = '-10px';
+			this.Yun139Button.style.cursor = 'pointer';
+			this.Yun139Button.style.height = '32px';
+			this.Yun139Button.style.minWidth = '0px';
+			this.Yun139Button.style.top = '-2px';
+			this.Yun139Button.setAttribute('title', mxResources.get('yun139'));
+
+			var icon = document.createElement('img');
+			icon.className = 'geInverseAdaptiveAsset';
+			icon.setAttribute('src', IMAGE_PATH + '/' + 'cloud.png');
+			icon.setAttribute('align', 'absmiddle');
+			icon.style.marginRight = '4px';
+			icon.style.marginTop = '-3px';
+			this.Yun139Button.appendChild(icon);
+
+			if (Editor.currentTheme != 'atlas')
+			{
+				icon.style.filter = 'invert(100%)';
+			}
+
+			mxUtils.write(this.Yun139Button, mxResources.get('yun139'));
+
+			mxEvent.addListener(this.Yun139Button, 'click', mxUtils.bind(this, function()
+			{
+				var editorUi = this;
+				var graph = editorUi.editor.graph;
+				var service = this.yun139;
+
+				var doImportFile = mxUtils.bind(this, function(data, mime, filename)
+				{
+					// Gets insert location
+					var view = graph.view;
+					var bds = graph.getGraphBounds();
+					var x = graph.snap(Math.ceil(Math.max(0, bds.x / view.scale - view.translate.x) + 4 * graph.gridSize));
+					var y = graph.snap(Math.ceil(Math.max(0, (bds.y + bds.height) / view.scale - view.translate.y) + 4 * graph.gridSize));
+
+					if (data.substring(0, 11) == 'data:image/')
+					{
+						editorUi.loadImage(data, mxUtils.bind(this, function(img)
+						{
+							var resizeImages = true;
+
+							var doInsert = mxUtils.bind(this, function()
+							{
+								editorUi.resizeImage(img, data, mxUtils.bind(this, function(data2, w2, h2)
+								{
+									var s = (resizeImages) ? Math.min(1, Math.min(editorUi.maxImageSize / w2, editorUi.maxImageSize / h2)) : 1;
+
+									editorUi.importFile(data, mime, x, y, Math.round(w2 * s), Math.round(h2 * s), filename, function(cells)
+									{
+										editorUi.spinner.stop();
+										graph.setSelectionCells(cells);
+										graph.scrollCellToVisible(graph.getSelectionCell());
+									});
+								}), resizeImages);
+							});
+
+							if (data.length > editorUi.resampleThreshold)
+							{
+								editorUi.confirmImageResize(function(doResize)
+								{
+									resizeImages = doResize;
+									doInsert();
+								});
+							}
+							else
+							{
+								doInsert();
+							}
+						}), mxUtils.bind(this, function()
+						{
+							editorUi.handleError({message: mxResources.get('cannotOpenFile')});
+						}));
+					}
+					else
+					{
+						editorUi.importFile(data, mime, x, y, 0, 0, filename, function(cells)
+						{
+							editorUi.spinner.stop();
+							graph.setSelectionCells(cells);
+							graph.scrollCellToVisible(graph.getSelectionCell());
+						});
+					}
+				});
+
+				service.pickFile(function(id)
+				{
+					if (editorUi.spinner.spin(document.body, mxResources.get('loading')))
+					{
+						// NOTE The third argument in getFile says denyConvert to match
+						// the existing signature in the original DriveClient which has
+						// as slightly different semantic, but works the same way.
+						service.getFile(id, function(file)
+							{
+								var mime = (file.getData().substring(0, 11) == 'data:image/') ? getMimeType(file.getTitle()) : 'text/xml';
+
+								// Imports SVG as images
+								if (/\.svg$/i.test(file.getTitle()) && !editorUi.editor.isDataSvg(file.getData()))
+								{
+									file.setData(Editor.createSvgDataUri(file.getData()));
+									mime = 'image/svg+xml';
+								}
+
+								doImportFile(file.getData(), mime, file.getTitle());
+							},
+							function(resp)
+							{
+								editorUi.handleError(resp, (resp != null) ? mxResources.get('errorLoadingFile') : null);
+							}, service == editorUi.drive);
+					}
+				},true);
+			}));
+
+			this.buttonContainer.appendChild(this.Yun139Button);
 		}
 
 		// AI drawing
@@ -8535,7 +8622,7 @@ App.prototype.toggleUserPanel = function()
 
 		if (this.owncloud != null)
 		{
-			addUser(this.owncloud.getUser(), this.owncloud.getUser().pictureUrl, mxUtils.bind(this, function()
+			addUser(this.owncloud.getUser(), IMAGE_PATH + '/yun139-logo.svg', mxUtils.bind(this, function()
 			{
 				var file = this.getCurrentFile();
 
