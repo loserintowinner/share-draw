@@ -9959,6 +9959,285 @@ var Yun139AuthDialog = function(editorUi, peer, showRememberOption, fn, customBu
 	this.container = div;
 };
 
+var AIDrawingDialog = function(editorUi)
+{
+	var div = document.createElement('div');
+	div.style.textAlign = 'center';
+	div.style.height = '400px';
+
+	var hd = document.createElement('h3');
+	mxUtils.write(hd, mxResources.get('AiDrawing'));
+	hd.style.cssText = 'width:100%;text-align:center;margin-top:0px;margin-bottom:12px';
+	div.appendChild(hd);
+
+	var inputItem = document.createElement('div');
+	var textarea = document.createElement('textarea');
+	textarea.setAttribute('wrap', 'off');
+	textarea.setAttribute('spellcheck', 'false');
+	textarea.setAttribute('autocorrect', 'off');
+	textarea.setAttribute('autocomplete', 'off');
+	textarea.setAttribute('autocapitalize', 'off');
+	textarea.style.overflow = 'auto';
+	textarea.style.resize = 'none';
+	textarea.style.width = '600px';
+	textarea.style.height = '300px';
+	textarea.style.marginBottom = '5px';
+	textarea.style.outline = 'none';
+	textarea.style.borderRadius = '4px';
+	textarea.style.padding = '6px 4px 0';
+	textarea.addEventListener('focus', function() {
+		// 当textarea获得焦点时，改变边框颜色
+		textarea.style.outline = '1px solid #067bef';
+	});
+	textarea.addEventListener('blur', function() {
+		// 当textarea失去焦点时，恢复边框颜色
+		textarea.style.outline = '1px solid #ccc';
+	});
+
+	inputItem.appendChild(textarea);
+	div.appendChild(inputItem);
+
+	var modeType = null;
+	var modeTypeGroup = document.createElement('div');
+	modeTypeGroup.style.float = "left";
+	modeTypeGroup.style.marginLeft = '30px';
+	mxUtils.write(modeTypeGroup, mxResources.get('inputMode') + ' :');
+	var normalMode = editorUi.addRadiobox(modeTypeGroup, 'modeTypeGroup', "描述画图", true, false, true);
+	normalMode.style.marginLeft = '20px';
+	var codeMode = editorUi.addRadiobox(modeTypeGroup, 'modeTypeGroup', "代码分析", false, false, true);
+	codeMode.style.marginLeft = '20px';
+
+	var setModeType = function(param) {
+		modeType = param;
+		if (modeType == "normal")
+		{
+			textarea.placeholder = '你可以这样提问：用户登录注册流程。';
+		} else if(modeType == "code")
+		{
+			textarea.placeholder = '1.请输入一个完整的函数\n2.正确的示例：\nvoid main() {\n    int a = 100;\n    printf("a is %d",a);\n}\n3.支持所有语言';
+		}
+	};
+	setModeType('normal');
+	mxEvent.addListener(normalMode, 'change', function() { if (this.checked) { setModeType('normal');}});
+	mxEvent.addListener(codeMode, 'change', function() { if (this.checked) { setModeType('code');}});
+	div.appendChild(modeTypeGroup);
+	mxUtils.br(modeTypeGroup);
+
+	this.init = function()
+	{
+		textarea.focus();
+		window.setTimeout(function()
+		{
+
+		}, 0);
+	};
+
+	var buttons = document.createElement('div');
+	buttons.style.position = 'absolute';
+	buttons.style.bottom = '36px';
+	buttons.style.right = '32px';
+
+
+	var closeBtn = mxUtils.button(mxResources.get('close'), function()
+	{
+		editorUi.hideDialog();
+	});
+
+	buttons.appendChild(closeBtn);
+
+	function parse(text, type, evt) {
+		var insertPoint = editorUi.editor.graph.getFreeInsertPoint();
+		var lines = text.split('\n');
+
+		if (editorUi.spinner.spin(document.body, mxResources.get('inserting')))
+		{
+			var k = 0;
+
+			while (k < lines.length && (lines[k].trim().length == 0 ||
+				lines[k].substring(0, 2) == '%%'))
+			{
+				k++;
+			}
+
+			if (lines[k].trim() == '---')
+			{
+				do
+				{
+					k++;
+				}
+				while (k < lines.length && lines[k].trim() != '---');
+
+				k++;
+			}
+
+			var diagramType = lines[k].trim().toLowerCase();
+			var sp = diagramType.indexOf(' ');
+			diagramType = diagramType.substring(0, sp > 0 ? sp : diagramType.length);
+			// TODO Better to add only what we support?
+			var inDrawioFormat = typeof mxMermaidToDrawio !== 'undefined' &&
+				type == 'mermaid2drawio' && diagramType != 'gantt' &&
+				diagramType != 'pie' && diagramType != 'timeline' &&
+				diagramType != 'quadrantchart' && diagramType != 'c4context' &&
+				diagramType != 'block-beta' && diagramType != 'zenuml' &&
+				diagramType != 'xychart-beta' && diagramType != 'sankey-beta';
+
+
+			var graph = editorUi.editor.graph;
+
+			if (inDrawioFormat)
+			{
+				mxMermaidToDrawio.addListener(mxUtils.bind(this, function(modelXml)
+				{
+					editorUi.spinner.stop();
+					graph.setSelectionCells(editorUi.importXml(modelXml,
+						Math.max(insertPoint.x, 20),
+						Math.max(insertPoint.y, 20),
+						true, null, null, true));
+					graph.scrollCellToVisible(graph.getSelectionCell());
+				}));
+			}
+
+			editorUi.generateMermaidImage(text, null, function(data, w, h)
+			{
+				if (inDrawioFormat) return;
+
+				insertPoint = (mxEvent.isAltDown(evt)) ? insertPoint : graph.getCenterInsertPoint(new mxRectangle(0, 0, w, h));
+				editorUi.spinner.stop();
+				var cell = null;
+
+				graph.getModel().beginUpdate();
+				try
+				{
+					cell = graph.insertVertex(null, null, null, insertPoint.x, insertPoint.y,
+						w, h, 'shape=image;noLabel=1;verticalAlign=top;imageAspect=1;' +
+						'image=' + data + ';')
+					graph.setAttributeForCell(cell, 'mermaidData',
+						JSON.stringify({data: text}, null, 2));
+				}
+				finally
+				{
+					graph.getModel().endUpdate();
+				}
+
+				if (cell != null)
+				{
+					graph.setSelectionCell(cell);
+					graph.scrollCellToVisible(cell);
+				}
+			}, function(e)
+			{
+				if (typeof mxMermaidToDrawio !== 'undefined')
+				{
+					mxMermaidToDrawio.resetListeners();
+				}
+
+				editorUi.handleError(e);
+			});
+		}
+	}
+
+	// 语法修复
+	function grammarRepair(data) {
+		const bracketMap = {
+			'{': '}',
+			'[': ']',
+			'(': ')'
+		};
+
+		var temp = data.replace(/<ret>/g, "\n").replace(/<\/ret>/g, "\n").replace(/"/g, ' ').replace(/；/g, ';').replace(/：/g, ':');
+
+		var repairLines = [];
+		var lines = temp.split('\n');
+		for(var line of lines)
+		{
+			var repairItems = [];
+			var items = line.split('--');
+			for(var item of items)
+			{
+				// 使用正则表达式匹配第一个大中小括号中的任何一个
+				var startIndex = item.search(/[\[{(]/);
+				if(startIndex != -1)
+				{
+					var startChar = item[startIndex];
+					var endChar = bracketMap[startChar];
+					var endIndex = item.lastIndexOf(endChar);
+
+					var subText = item.slice(startIndex + 1, endIndex);
+					while(subText != null && subText.length > 0 && bracketMap[subText[0]] == subText[subText.length - 1])
+					{
+						startIndex++;
+						endIndex--;
+						subText = item.slice(1,-1);
+					}
+					if(subText.search(/[\[\]{}()]/) != -1)
+					{
+						repairItems.push(item.slice(0, startIndex + 1) + '"' + item.slice(startIndex + 1, endIndex) + '"' + item.slice(endIndex));
+					}
+					else {
+						repairItems.push(item);
+					}
+				}
+				else
+				{
+					repairItems.push(item);
+				}
+			}
+			repairLines.push(repairItems.join('--'));
+		}
+		return repairLines.join('\n');
+	}
+
+	var okBtn = mxUtils.button(mxResources.get('generate'), function(evt)
+	{
+		editorUi.spinner.spin(div, mxResources.get('loading'));
+		evt.target.disabled  = true;
+
+		var model = urlParams['model'] != null ? urlParams['model'] : 'spark';
+
+		var params = {
+			'context': textarea.value,
+			'model': model,
+		}
+
+		var req = new mxXmlRequest(window.DRAWIO_SERVER_URL + 'ai/generate',
+			JSON.stringify(params), 'POST');
+		req.send(function(req)
+		{
+			editorUi.spinner.stop();
+			editorUi.hideDialog();
+
+			if(req.getStatus() == 200 && req.getText() != null)
+			{
+				var res = JSON.parse(req.getText());
+				var data = grammarRepair(res['data']);
+				if(urlParams['dev'] == '1')
+				{
+					console.log(data);
+				}
+				parse(data, 'mermaid2drawio', evt);
+			}
+			else
+			{
+				editorUi.spinner.stop();
+				editorUi.alert("目前无法准确回答您的问题")
+			}
+
+		}, function (req) {
+			editorUi.spinner.stop();
+		});
+
+	});
+
+	buttons.appendChild(okBtn);
+	okBtn.className = 'geBtn gePrimaryBtn';
+	closeBtn.className = 'geBtn';
+
+	mxUtils.br(div);
+	div.appendChild(buttons);
+
+	this.container = div;
+};
+
 
 var MoreShapesDialog = function(editorUi, expanded, entries)
 {

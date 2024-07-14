@@ -8,6 +8,8 @@ import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
 
@@ -36,5 +38,19 @@ public class Utils {
             }
         }
         return params;
+    }
+
+    public static String extractMermaidContent(String input) {
+        String regex = "```mermaid\\s*([\\s\\S]*?)\\s*```";
+        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(input);
+
+        if (matcher.find()) {
+            // 提取匹配到的内容（即被````mermaid````标签包围的内容）
+            return matcher.group(1).trim();
+        }
+
+        // 如果没有找到匹配项，则返回null
+        return null;
     }
 }

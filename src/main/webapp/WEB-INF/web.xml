@@ -159,6 +159,16 @@
         <servlet-name>OwnCloudServlet</servlet-name>
         <url-pattern>/owncloud/*</url-pattern>
     </servlet-mapping>
+    <servlet>
+        <description/>
+        <display-name>AIServlet</display-name>
+        <servlet-name>AIServlet</servlet-name>
+        <servlet-class>com.mxgraph.extend.ai.AIServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AIServlet</servlet-name>
+        <url-pattern>/ai/*</url-pattern>
+    </servlet-mapping>
     <mime-mapping>
         <extension>css</extension>
         <mime-type>text/css</mime-type>

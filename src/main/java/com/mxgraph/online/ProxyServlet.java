@@ -18,6 +18,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -210,11 +211,20 @@ public class ProxyServlet extends HttpServlet
 		}
 		else
 		{
-//			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-//			log.log(Level.SEVERE,
-//					"proxy request with invalid URL parameter: url="
-//							+ ((urlParam != null) ? urlParam : "[null]"));
-			OwnCloudServlet.loadFile(request, response);
+			Map<String, String> params = com.mxgraph.extend.Utils.parseQueryString(request.getParameter("url"));
+			String chartId = params.get("chartId");
+			String file = OwnCloudServlet.loadFile(chartId);
+			System.out.println(file);
+			if (file != null) {
+				response.setStatus(HttpServletResponse.SC_OK);
+				response.setContentType("text/html;charset=utf-8");
+				OutputStream out = response.getOutputStream();
+				out.write(file.getBytes("utf-8"));
+				out.flush();
+				out.close();
+			} else {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			}
 		}
 	}
 

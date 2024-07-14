@@ -24,8 +24,10 @@ public class EmbedServlet extends HttpServlet {
      * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
      */
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String file = loadFile(request, response);
-        if (response.getStatus() == HttpServletResponse.SC_OK) {
+        String chartId = request.getParameter("chartId");
+        String file = OwnCloudServlet.loadFile(chartId);
+        if (file != null) {
+            response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("text/html;charset=utf-8");
 
             PrintWriter writer = response.getWriter();
@@ -47,11 +49,13 @@ public class EmbedServlet extends HttpServlet {
 //            System.out.println(htmlEntities(jsonObject.toString()));
 
             writer.println("\" > </div >");
-            writer.println("<script type=\"text/javascript\" src=\"https://viewer.diagrams.net/js/viewer-static.min.js\"></script>");
-
+//            writer.println("<script type=\"text/javascript\" src=\"https://viewer.diagrams.net/js/viewer-static.min.js\"></script>");
+            writer.println("<script type=\"text/javascript\" src=\"js/viewer-static.min.js\"></script>");
             writer.println("</body>");
             writer.println("</html>");
             writer.flush();
+        } else {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
     }
 
@@ -74,57 +78,5 @@ public class EmbedServlet extends HttpServlet {
         return s;
     }
 
-
-    public static String loadFile(HttpServletRequest request, HttpServletResponse response) {
-        HttpURLConnection httpConn = null;
-        try {
-            String chartId = request.getParameter("chartId");
-
-            URL url = new URL(EnvironmentVariableListener.OWNCLOUD_SERVICE_URL + "/f/" + chartId + "/?dl=1");
-            httpConn = (HttpURLConnection) url.openConnection();
-            httpConn.setRequestMethod("GET");
-            httpConn.setRequestProperty("Cookie", request.getHeader("cookie"));
-            SkipSSLVerification.trustAllHosts((HttpsURLConnection) httpConn);
-
-            int responseCode = httpConn.getResponseCode();
-            if (responseCode == HttpServletResponse.SC_MOVED_PERMANENTLY
-                    || responseCode == HttpServletResponse.SC_MOVED_TEMPORARILY) {
-                // 获取重定向的URL
-                String redirectUrl = httpConn.getHeaderField("Location");
-                URL newUrl = new URL(redirectUrl);
-
-                httpConn.disconnect();
-                httpConn = (HttpURLConnection) newUrl.openConnection();
-                httpConn.setRequestMethod("GET");
-                httpConn.setRequestProperty("Cookie", request.getHeader("cookie"));
-                SkipSSLVerification.trustAllHosts((HttpsURLConnection) httpConn);
-
-                responseCode = httpConn.getResponseCode();
-            }
-            if (responseCode == HttpServletResponse.SC_OK) {
-                response.setStatus(HttpServletResponse.SC_OK);
-
-                BufferedReader in = new BufferedReader(new InputStreamReader(httpConn.getInputStream(), "UTF-8"));
-                String inputLine;
-                StringBuffer sb = new StringBuffer();
-                while ((inputLine = in.readLine()) != null) {
-                    sb.append(inputLine);
-                }
-                in.close();
-
-                return sb.toString();
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (httpConn != null) {
-                httpConn.disconnect();
-            }
-        }
-        // fail
-        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        return null;
-    }
 
 }

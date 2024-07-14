@@ -1293,3 +1293,5 @@ saveToOwnCloud=Save to OwnCloud
 newFolder=new folder
 shareEditLink=Link for shared editing
 embedHtmlLink=Link for embed html
+AiDrawing=AI Drawing
+inputMode=out mode

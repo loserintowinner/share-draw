@@ -1293,3 +1293,5 @@ saveToOwnCloud=Save to OwnCloud
 newFolder=新建文件夹
 shareEditLink=共享链接
 embedHtmlLink=嵌入页面
+AiDrawing=AI绘图
+inputMode=输入模式

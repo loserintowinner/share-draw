@@ -5569,6 +5569,225 @@ App.prototype.loadFile = function(id, sameWindow, file, success, force)
 				}), (urlParams['template-filename'] != null) ?
 					decodeURIComponent(urlParams['template-filename']) : null);
 			}
+			else if (id.charAt(0) == 'M')
+			{
+				var url = decodeURIComponent(id.substring(1));
+
+				this.loadTemplate(url, mxUtils.bind(this, function(text, req)
+				{
+					this.spinner.stop();
+
+					if (text != null && text.length > 0)
+					{
+						var filename = this.defaultFilename;
+
+						// Tries to find name from URL with valid extensions
+						if (urlParams['title'] == null && urlParams['notitle'] != '1')
+						{
+							var tmp = url;
+							var dot = url.lastIndexOf('.');
+							var slash = tmp.lastIndexOf('/');
+
+							if (dot > slash && slash > 0)
+							{
+								tmp = tmp.substring(slash + 1, dot);
+								var ext = url.substring(dot);
+
+								if (!this.useCanvasForExport && ext == '.png')
+								{
+									ext = '.drawio';
+								}
+
+								if (ext === '.svg' || ext === '.xml' ||
+									ext === '.html' || ext === '.png'  ||
+									ext === '.drawio')
+								{
+									filename = tmp + ext;
+								}
+							}
+						}
+
+						if (urlParams['title'] == null && req.request.getResponseHeader('Content-Disposition') != null)
+						{
+							let contentDisposition = req.request.getResponseHeader('Content-Disposition').replace(/\s*/g,"");
+							let filenameRegex = /filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?;?/gi;
+							let match = contentDisposition.matchAll(filenameRegex);
+							match = Array.from(match)
+							if (match != null && match[0].length >= 2) {
+								filename = decodeURIComponent(match[0][1]);
+							}
+						}
+
+						var tempFile = new LocalFile(this, text, (urlParams['title'] != null) ?
+							decodeURIComponent(urlParams['title']) : filename, true);
+						tempFile.getHash = function()
+						{
+							return id;
+						};
+
+						var editorUi = this;
+
+						var parse = mxUtils.bind(this, function (text, type, evt) {
+							var insertPoint = editorUi.editor.graph.getFreeInsertPoint();
+							var lines = text.split('\n');
+
+							if (editorUi.spinner.spin(document.body, mxResources.get('inserting')))
+							{
+								var k = 0;
+
+								while (k < lines.length && (lines[k].trim().length == 0 ||
+									lines[k].substring(0, 2) == '%%'))
+								{
+									k++;
+								}
+
+								if (lines[k].trim() == '---')
+								{
+									do
+									{
+										k++;
+									}
+									while (k < lines.length && lines[k].trim() != '---');
+
+									k++;
+								}
+
+								var diagramType = lines[k].trim().toLowerCase();
+								var sp = diagramType.indexOf(' ');
+								diagramType = diagramType.substring(0, sp > 0 ? sp : diagramType.length);
+								// TODO Better to add only what we support?
+								var inDrawioFormat = typeof mxMermaidToDrawio !== 'undefined' &&
+									type == 'mermaid2drawio' && diagramType != 'gantt' &&
+									diagramType != 'pie' && diagramType != 'timeline' &&
+									diagramType != 'quadrantchart' && diagramType != 'c4context' &&
+									diagramType != 'block-beta' && diagramType != 'zenuml' &&
+									diagramType != 'xychart-beta' && diagramType != 'sankey-beta';
+
+
+								var graph = editorUi.editor.graph;
+
+								if (inDrawioFormat)
+								{
+									mxMermaidToDrawio.addListener(mxUtils.bind(this, function(modelXml)
+									{
+										editorUi.spinner.stop();
+
+										var tempFile = new LocalFile(this, modelXml, (urlParams['title'] != null) ?
+											decodeURIComponent(urlParams['title']) : filename, true);
+										tempFile.getHash = function()
+										{
+											return id;
+										};
+										this.fileLoaded(tempFile, true)
+									}));
+								}
+
+								editorUi.generateMermaidImage(text, null, function(data, w, h)
+								{
+									if (inDrawioFormat) return;
+
+									insertPoint = (mxEvent.isAltDown(evt)) ? insertPoint : graph.getCenterInsertPoint(new mxRectangle(0, 0, w, h));
+									editorUi.spinner.stop();
+									var cell = null;
+
+									graph.getModel().beginUpdate();
+									try
+									{
+										cell = graph.insertVertex(null, null, null, insertPoint.x, insertPoint.y,
+											w, h, 'shape=image;noLabel=1;verticalAlign=top;imageAspect=1;' +
+											'image=' + data + ';')
+										graph.setAttributeForCell(cell, 'mermaidData',
+											JSON.stringify({data: text}, null, 2));
+									}
+									finally
+									{
+										graph.getModel().endUpdate();
+									}
+
+									if (cell != null)
+									{
+										graph.setSelectionCell(cell);
+										graph.scrollCellToVisible(cell);
+									}
+								}, function(e)
+								{
+									if (typeof mxMermaidToDrawio !== 'undefined')
+									{
+										mxMermaidToDrawio.resetListeners();
+									}
+
+									editorUi.handleError(e);
+								});
+							}
+						});
+
+						// 语法修复
+						function grammarRepair(data) {
+							const bracketMap = {
+								'{': '}',
+								'[': ']',
+								'(': ')'
+							};
+
+							var temp = data.replace(/<ret>/g, "\n").replace(/<\/ret>/g, "\n").replace(/"/g, ' ').replace(/；/g, ';').replace(/：/g, ':');
+
+							var repairLines = [];
+							var lines = temp.split('\n');
+							for(var line of lines)
+							{
+								var repairItems = [];
+								var items = line.split('--');
+								for(var item of items)
+								{
+									// 使用正则表达式匹配第一个大中小括号中的任何一个
+									var startIndex = item.search(/[\[{(]/);
+									if(startIndex != -1)
+									{
+										var startChar = item[startIndex];
+										var endChar = bracketMap[startChar];
+										var endIndex = item.lastIndexOf(endChar);
+
+										var subText = item.slice(startIndex + 1, endIndex);
+										while(subText != null && subText.length > 0 && bracketMap[subText[0]] == subText[subText.length - 1])
+										{
+											startIndex++;
+											endIndex--;
+											subText = item.slice(1,-1);
+										}
+										if(subText.search(/[\[\]{}()]/) != -1)
+										{
+											repairItems.push(item.slice(0, startIndex + 1) + '"' + item.slice(startIndex + 1, endIndex) + '"' + item.slice(endIndex));
+										}
+										else {
+											repairItems.push(item);
+										}
+									}
+									else
+									{
+										repairItems.push(item);
+									}
+								}
+								repairLines.push(repairItems.join('--'));
+							}
+							return repairLines.join('\n');
+						}
+
+						parse(grammarRepair(text), 'mermaid2drawio');
+
+					}
+					else
+					{
+						this.handleError({message: mxResources.get('fileNotFound')},
+							mxResources.get('errorLoadingFile'));
+					}
+				}), mxUtils.bind(this, function()
+				{
+					this.spinner.stop();
+					this.handleError({message: mxResources.get('fileNotFound')},
+						mxResources.get('errorLoadingFile'));
+				}), (urlParams['template-filename'] != null) ?
+					decodeURIComponent(urlParams['template-filename']) : null);
+			}
 			else
 			{
 				var mode = this.getModeForChar(id.charAt(0));
@@ -6238,6 +6457,47 @@ App.prototype.updateButtonContainer = function()
 				this.notificationBtn.style.marginRight = '';
 				this.notificationBtn.style.marginTop = '';
 			}
+		}
+
+		// AI drawing
+		if(this.AIDrawingButton == null)
+		{
+			this.AIDrawingButton = document.createElement('button');
+			this.AIDrawingButton.className = 'geBtn geShareBtn';
+			this.AIDrawingButton.style.display = 'inline-block';
+			this.AIDrawingButton.style.position = 'relative';
+			this.AIDrawingButton.style.backgroundImage = 'none';
+			this.AIDrawingButton.style.padding = '2px 10px 0 10px';
+			this.AIDrawingButton.style.marginTop = '-10px';
+			this.AIDrawingButton.style.cursor = 'pointer';
+			this.AIDrawingButton.style.height = '32px';
+			this.AIDrawingButton.style.minWidth = '0px';
+			this.AIDrawingButton.style.top = '-2px';
+			this.AIDrawingButton.setAttribute('title', mxResources.get('diagram'));
+
+			var icon = document.createElement('img');
+			icon.className = 'geInverseAdaptiveAsset';
+			icon.setAttribute('src', IMAGE_PATH + '/' + 'ai.png');
+			icon.setAttribute('align', 'absmiddle');
+			icon.style.marginRight = '4px';
+			icon.style.marginTop = '-3px';
+			this.AIDrawingButton.appendChild(icon);
+
+			if (Editor.currentTheme != 'atlas')
+			{
+				icon.style.filter = 'invert(100%)';
+			}
+
+			mxUtils.write(this.AIDrawingButton, mxResources.get('diagram'));
+
+			mxEvent.addListener(this.AIDrawingButton, 'click', mxUtils.bind(this, function()
+			{
+				var dlg = new AIDrawingDialog(this);
+				this.showDialog(dlg.container, 640, 450, true, true);
+				dlg.init();
+			}));
+
+			this.buttonContainer.appendChild(this.AIDrawingButton);
 		}
 	}
 };
