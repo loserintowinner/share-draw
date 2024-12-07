@@ -1,0 +1,7 @@
+.idea
+out
+build
+src/main/webapp/WEB-INF/classes
+src/main/webapp/WEB-INF/*_client_id
+src/main/webapp/WEB-INF/*_client_secret
+src/main/webapp/WEB-INF/*.properties

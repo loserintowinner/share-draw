@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <title>安装插件教程</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      margin: 20px auto;
+      max-width: 800px;
+      color: #333;
+    }
+
+    .content {
+      margin: 20px auto;
+      max-width: 800px;
+    }
+
+    .download-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .download-link a {
+      text-decoration: none;
+      color: #007BFF;
+    }
+
+    .step-image {
+      display: block;
+      margin: 10px auto;
+      width: 70%;
+      height: auto;
+      transition: transform 0.25s ease;
+    }
+
+    .zoomed {
+      transform: scale(2);
+    }
+  </style>
+</head>
+
+<body>
+<h2>获取授权所需插件</h2>
+<div class="download-link">
+  <a href="share-draw.zip" download>下载插件 (share-draw.zip)</a>
+</div>
+<h2>如何安装Google插件（Chrome扩展程序）</h2>
+<div class="content">
+  <p>安装Google插件（Chrome扩展程序）是一个简单的过程。请按照以下步骤操作：</p>
+  <ol>
+    <li>
+      <!-- <img class="step-image" src="images/step1.jpg" alt="下载插件文件">   -->
+      首先，下载插件文件（例如：share-draw.zip）。
+    </li>
+    <li>
+      打开chrome浏览器——点击三点按钮——更多工具——扩展程序。
+      <img class="step-image" src="images/step2.png" alt="选择更多工具和扩展程序">
+
+    </li>
+    <li>
+      在扩展程序页面，打开右上角的“开发者模式”开关（如果尚未打开）。
+      <img class="step-image" src="images/step3.png" alt="打开开发者模式">
+
+    </li>
+    <li>
+      点击“加载已解压的扩展程序”按钮。
+      <img class="step-image" src="images/step4.png" alt="点击加载已解压的扩展程序">
+
+    </li>
+    <li>
+      选择包含插件文件的文件夹（例如：解压后的share-draw文件夹）。
+      <img class="step-image" src="images/step5.png" alt="选择插件文件夹">
+
+    </li>
+    <li>
+      点击“选择文件夹”以完成安装。
+      <img class="step-image" src="images/step6.png" alt="点击选择文件夹">
+    </li>
+  </ol>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // 获取所有的步骤图片
+    var stepImages = document.querySelectorAll('.step-image');
+
+    // 遍历每个图片并添加点击事件监听器
+    stepImages.forEach(function (image, index) {
+      image.addEventListener('click', function (e) {
+        this.classList.toggle('zoomed');
+      });
+    });
+  });
+</script>
+</body>
+
+</html>
